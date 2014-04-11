@@ -3,12 +3,15 @@
 ## Installation
 
 Add this line to your application's Gemfile:
+
     gem 'fluent-plugin-nginx-status'
 
 Or install it yourself as:
+
     $ gem install fluent-plugin-nginx-status
 
 Or use td-agent : (on Ubuntu12.04)
+
     $ sudo /usr/lib/fluent/ruby/bin/fluent-gem install fluent-plugin-nginx-status
 
 ## Configuration
