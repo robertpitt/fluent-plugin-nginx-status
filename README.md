@@ -23,3 +23,11 @@ You also need to enable the nginx_status page in your nginx configuration, see t
 
 http://wiki.nginx.org/HttpStubStatusModule
 
+## Options
+| Key           | Default       | Required  |
+| ------------- |:-------------:| ---------:|
+| tag           | nginx.status  |    yes    |
+| host          | 127.0.0.1     |    no     |
+| port          | 80            |    no     |
+| path          | /nginx_status |    no     |
+| interval      | 1             |    no     |
