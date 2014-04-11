@@ -44,16 +44,16 @@ class NginxTimer < Fluent::Input
     @tag = conf['tag'] || 'nginx.status'
 
     # Nginx host
-    @scheme = conf['scheme'] || 'http'
-
-    # Nginx host
     @host = conf['host'] || 'localhost'
 
     # Default port is http
-    @port = conf['port'] || 80
+    @port = conf['port'] || "80"
+
+    # Nginx host
+    @scheme = if @port == 443 then "https" else "http" end
 
     # Nginz status page path
-    @path = conf['path'] || 'nginx_status'
+    @path = conf['path'] || '/nginx_status'
 
     #Interval for the timer object, defaults 1s
     @interval = conf['interval'] || 1
@@ -75,9 +75,6 @@ class NginxTimer < Fluent::Input
 
     # Run the timer object within a new thread
     @thread = Thread.new(&method(:run))
-
-    # Logging
-    $log.info "Nginx status monitor starting"
   end
 
   # Sub-thread run method
@@ -90,8 +87,10 @@ class NginxTimer < Fluent::Input
 
   # On timer method
   def on_timer
-    # Create a connection
-    uri = URI.parse("http://127.0.0.1:80/nginx_status")
+    # Generate a URI Object, helps validate domain etc
+    uri = URI.parse(@scheme + "://" + @host + ":" + @port)
+
+    # Create a new connection object to the endpoint
     connection = Net::HTTP.new(uri.host, uri.port)
 
     # # Are we going over ssl
@@ -103,23 +102,15 @@ class NginxTimer < Fluent::Input
     end
 
     # Fetch the response
-    response = connection.get(uri.path)
+    response = connection.get(@path)
 
     # Validate a response
     if response.code != "200"
-      $log.error "Nginx status page failing, response code: " + response.code.to_s
+      $log.error "invalid_nginx_status_response", :code => response.code
       return
     end
 
     if m = response.body.to_s.match(/^[a-zA-Z\s]+\:\s([0-9]+?)\s\n[a-z\s]+([0-9]+)\s([0-9]+)\s([0-9]+)\s\n[a-zA-Z\:?]+\s([0-9]+)\s[a-zA-Z\:?]+\s([0-9]+)\s[a-zA-Z\:?]+\s([0-9]+)/)
-      # m.captures[0] = active
-      # m.captures[1] = accepted
-      # m.captures[2] = handled
-      # m.captures[3] = total
-      # m.captures[4] = reading
-      # m.captures[5] = writing
-      # m.captures[6] = waiting
-      
       record = {
         "active"   => m.captures[0],
         "accepted" => m.captures[1],
@@ -130,6 +121,7 @@ class NginxTimer < Fluent::Input
         "waiting"  => m.captures[6],
       }
 
+      # Push to the FluentD Output handlers
       Fluent::Engine.emit(@tag, Time.now.to_i, record)
     end
 
@@ -144,6 +136,5 @@ class NginxTimer < Fluent::Input
     @loop.watchers.each {|w| w.detach }
     @loop.stop
     @thread.join
-    $log.info "shutdown nginx_status"
   end
 end
