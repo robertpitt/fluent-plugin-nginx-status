@@ -17,6 +17,7 @@ Adding the following source block will enable the nginx status plugin for Fluent
 
     <source>
         type nginx_status
+        tag  nginx.status.localhost
     </source>
 
 You also need to enable the nginx_status page in your nginx configuration, see the following link for more details:
@@ -25,7 +26,7 @@ http://wiki.nginx.org/HttpStubStatusModule
 
 ## Options
 | Key           | Default       | Required  |
-| ------------- |:-------------:| ---------:|
+|:------------- |:-------------:|:---------:|
 | tag           | nginx.status  |    yes    |
 | host          | 127.0.0.1     |    no     |
 | port          | 80            |    no     |
